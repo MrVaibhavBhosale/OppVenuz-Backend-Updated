@@ -25,10 +25,12 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False   # RENDER VAR NEHMICH FALSE
 
 ALLOWED_HOSTS = [
-    "oppvenuz-backend-new.onrender.com",
+    "oppvenuz-backend-updated.onrender.com",
     "api.oppvenuz.com",
     "api-dev.oppvenuz.com",
     ".onrender.com",
+    "https://dev-superadmin.oppvenuz.com",
+
 ]
 
 USE_X_FORWARDED_HOST = True
@@ -38,6 +40,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CORS_ALLOWED_ORIGINS = [
     "https://oppvenuz.com",
+    "https://dev-superadmin.oppvenuz.com",
     "https://www.oppvenuz.com",
     "https://admin.oppvenuz.com",
     "http://localhost:3000",
@@ -47,6 +50,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://oppvenuz.com",
     "https://api.oppvenuz.com",
     "https://oppvenuz-backend-new.onrender.com",
+    "https://oppvenuz-backend-updated.onrender.com",
+    "https://dev-superadmin.oppvenuz.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
