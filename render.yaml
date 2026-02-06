@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: oppvenuz-backend
+    env: python
+    plan: free
+    branch: main
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        value: your_secret_key_here
+      - key: DB_NAME
+        value: oppvenuzdb
+      - key: DB_USER
+        value: oppvenuzdb_user
+      - key: DB_PASSWORD
+        value: your_database_password_here
+      - key: DB_HOST
+        value: dpg-d3mc17emcj7s73aigvc0-a
+      - key: DB_PORT
+        value: 5432
+      - key: DEBUG
+        value: "False"
