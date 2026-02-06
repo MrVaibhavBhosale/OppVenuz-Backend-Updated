@@ -26,7 +26,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="BSD License"),
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=[permissions.AllowAny],
 )
 
 urlpatterns = [
@@ -40,11 +40,7 @@ urlpatterns = [
     ),
 
     # Swagger UI at root
-    path(
-        "",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
 
     # JWT
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
