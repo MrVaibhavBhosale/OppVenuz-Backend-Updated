@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+from drf_yasg import openapi
 
 load_dotenv()
 
@@ -226,3 +227,15 @@ DEFAULT_ADMIN_FULL_NAME = os.getenv("DEFAULT_ADMIN_FULL_NAME")
 
 TIME_ZONE = "Asia/Kolkata"
 USE_TZ = True
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Enter token like: Bearer <your_token>",
+        }
+    },
+    "USE_SESSION_AUTH": False,
+}
