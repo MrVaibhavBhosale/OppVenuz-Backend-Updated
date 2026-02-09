@@ -137,5 +137,7 @@ whitenoise==6.11.0
 wrapt==1.14.1
 yarl==1.8.2
 gunicorn==21.2.0
-setuptools>=68.0.0
+setuptools==68.2.2
+
+
 
