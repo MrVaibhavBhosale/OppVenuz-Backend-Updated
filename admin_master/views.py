@@ -718,215 +718,97 @@ class PaymentTypeDeleteView(generics.DestroyAPIView):
 class ServiceCreateView(generics.CreateAPIView):
     queryset = Service_master.objects.all()
     serializer_class = ServiceSerializer
-    authentication_classes = [AdminJWTAuthentication]  
+    authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
-
+ 
     def perform_create(self, serializer):
-        user_fullname = (
-        getattr(self.request.user, "email", None)
-            or getattr(self.request.user, "full_name", None)
-            or getattr(self.request.user, "username", None)  
-        ) 
-        serializer.save(
-            created_by=user_fullname,
-            updated_by=user_fullname
-        )
-
+        user = self.request.user
+        created_by = getattr(user, "email", user.username)
+        serializer.save(created_by=created_by, updated_by=created_by)
+ 
     def create(self, request, *args, **kwargs):
-        service_name = request.data.get("service_name", "").strip()
-
-        if not service_name:
-            return Response(
-                {"message": "Service name cannot be empty.", "status": False},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        existing_service = Service_master.objects.filter(
-            service_name__iexact=service_name
-        ).exclude(status=3).first()
-
-        if existing_service:
-            return Response(
-                {
-                    "message": f"Service '{service_name}' already exists.",
-                    "status": False
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
+ 
         return Response(
             {
+                "status": True,
                 "message": "Service created successfully.",
                 "data": serializer.data,
-                "status": True
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED,
         )
-    
-
-@method_decorator(name='get', decorator=swagger_auto_schema(tags=['Admin Services']))
+@method_decorator(name="get", decorator=swagger_auto_schema(tags=["Admin Services"]))
 class ServiceListView(generics.ListAPIView):
     serializer_class = ServiceSerializer
-    # permission_classes = [AllowAny]
-    authentication_classes = [AdminJWTAuthentication]  
+    authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
-
+ 
     def get_queryset(self):
-        queryset = Service_master.objects.filter(status__in=[1, 2])
-
-        service = self.request.query_params.get('service_name', None)
-        if service:
-            queryset = queryset.filter(service_name__icontains=service.strip())
-            if not queryset.exists():
-                logger.warning(f"{service} — no such service exists.")
-                raise ValidationError({"service_name": f"'{service}' does not exist."})
-        return queryset
-    
+        return Service_master.objects.filter(status__in=[1, 2]).order_by("-id")
+ 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-
-        if queryset.exists():
-            return Response(
-                {
-                    "message": "Service list fetched successfully.",
-                    "count": queryset.count(),
-                    "data": serializer.data,
-                    "status": True
-                },
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(
-                {
-                    "message": "No services found.",
-                    "data": [],
-                    "status": False
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-    
-
-
-@method_decorator(name='put', decorator=swagger_auto_schema(tags=['Admin Services']))
-@method_decorator(name='patch', decorator=swagger_auto_schema(tags=['Admin Services']))
+ 
+        return Response(
+            {
+                "status": True,
+                "count": queryset.count(),
+                "data": serializer.data,
+                "message": "Service list fetched successfully.",
+            },
+            status=status.HTTP_200_OK,
+        )
+@method_decorator(name="put", decorator=swagger_auto_schema(tags=["Admin Services"]))
 class ServiceUpdateView(generics.UpdateAPIView):
     queryset = Service_master.objects.filter(status__in=[1, 2])
     serializer_class = ServiceSerializer
-    authentication_classes = [AdminJWTAuthentication]  
+    authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
-    lookup_field = 'id'
-
+    lookup_field = "id"
+ 
     def perform_update(self, serializer):
         user = self.request.user
-        data = serializer.validated_data
-        service_name = data.get('service_name', None)
-        user_fullname = (
-                getattr(self.request.user, "full_name", None)
-                or getattr(self.request.user, "email", None)
-                or getattr(self.request.user, "username", None)  
-            ) 
-
-        if service_name and not service_name.replace(' ', '').isalpha():
-            logger.warning(f"invalid service name {service_name}")
-            raise ValidationError({"service_name": "Service name must contains only letters and spaces."})
-        
-        if service_name:
-            existing = Service_master.objects.filter(
-                service_name__iexact=service_name.strip(),
-                status__in=[1, 2]
-            ).exclude(id=serializer.instance.id)
-            if existing.exists():
-                raise ValidationError({"service_name": f"A service with the name '{service_name}' already exists."})
-        
-        registration_charges = data.get('registration_charges', None)
-        if registration_charges is not None and registration_charges < 0:
-            logger.warning("invalid registration charges")
-            raise ValidationError({"registration_charges": "Registration charges must contain positive number."})
-        
-        updated_by = user_fullname
+        updated_by = getattr(user, "email", user.username)
         serializer.save(updated_by=updated_by)
-
+ 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-
-        try:
-            instance = self.get_object()
-        except Service_master.DoesNotExist:
-            return Response(
-                {
-                    "message": "Service not found.",
-                    "status": False
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
+ 
         return Response(
             {
+                "status": True,
                 "message": "Service updated successfully.",
                 "data": serializer.data,
-                "status": True
             },
-            status=status.HTTP_200_OK
-        )        
-
-
-@method_decorator(name='delete', decorator=swagger_auto_schema(tags=['Admin Services']))
+            status=status.HTTP_200_OK,
+        )
+@method_decorator(name="delete", decorator=swagger_auto_schema(tags=["Admin Services"]))
 class ServiceDeleteView(generics.DestroyAPIView):
-    queryset = Service_master.objects.filter(status__in=[1, 2]) 
+    queryset = Service_master.objects.filter(status__in=[1, 2])
     serializer_class = ServiceSerializer
-    authentication_classes = [AdminJWTAuthentication]  
+    authentication_classes = [AdminJWTAuthentication]
     permission_classes = [IsAuthenticated]
-    lookup_field = 'id'
-
+    lookup_field = "id"
+ 
     def destroy(self, request, *args, **kwargs):
-        service_id = kwargs.get('id')
-        try:
-            instance = self.get_object()
-            instance.status = 3
-            user_fullname = (
-                getattr(self.request.user, "full_name", None)
-                or getattr(self.request.user, "email", None)
-                or getattr(self.request.user, "username", None)  
-            ) 
-            instance.updated_by = user_fullname
-            instance.save(update_fields=['status', 'updated_by', 'updated_at'])
-            return Response(
-                { 
-                    "status": True,
-                    "message": "Service deleted successfully.",
-                },
-                status=status.HTTP_200_OK
-            )
-
-        except Service_master.DoesNotExist:
-            logger.warning(f"Service ID {service_id} not found.")
-            return Response(
-                {
-                    "status": False,
-                    "message": "Service not found.",
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        except Exception as e:
-            logger.error(f"Error deleting service ID {service_id}: {str(e)}")
-            return Response(
-                {
-                    "message": "An unexpected error occurred while deleting the service.",
-                    "error": str(e),
-                    "status": False
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        instance = self.get_object()
+        instance.status = 3
+        instance.updated_by = getattr(request.user, "email", request.user.username)
+        instance.save(update_fields=["status", "updated_by", "updated_at"])
+ 
+        return Response(
+            {
+                "status": True,
+                "message": "Service deleted successfully.",
+            },
+            status=status.HTTP_200_OK,
+        )
         
 @method_decorator(name='post', decorator=swagger_auto_schema(tags=['Document Services']))
 class DocumentTypeCreateView(generics.CreateAPIView):
