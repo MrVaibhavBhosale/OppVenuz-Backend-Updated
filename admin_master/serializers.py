@@ -417,6 +417,7 @@ class AddAdminSerializer(serializers.ModelSerializer):
 
         user = AdminUser.objects.create_user(
             password=password,
+            status_id=1,
             **validated_data
         )
 
