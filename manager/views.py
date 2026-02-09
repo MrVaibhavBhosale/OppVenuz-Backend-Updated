@@ -239,8 +239,8 @@ class EmployeeListAPIView(APIView):
     
 @method_decorator(name='get', decorator=swagger_auto_schema(tags=['EmployeeDetails_by_id']))
 class EmployeeDetailsById(APIView):
-    authentication_classes = [MultiRoleJWTAuthentication]
-    permission_classes = [EmployeeDetailsPermission]
+    authentication_classes = [AdminJWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, role, pk):
         model_map = {
