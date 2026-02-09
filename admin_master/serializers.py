@@ -124,22 +124,33 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     def validate_service_name(self, value):
         value = value.strip()
-        qs = Service_master.objects.filter(service_name__iexact=value, status__in=[1, 2])
-
-        # Exclude current instance if updating
-        instance = getattr(self, 'instance', None)
-        if instance:
-            qs = qs.exclude(id=instance.id)
-
+ 
+        if not value.replace(" ", "").isalpha():
+            raise serializers.ValidationError(
+                "Service name must contain only letters and spaces."
+            )
+ 
+        qs = Service_master.objects.filter(
+            service_name__iexact=value,
+            status__in=[1, 2]
+        )
+ 
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+ 
         if qs.exists():
-            raise ValidationError("Service name already exists among active/inactive services")
+            raise serializers.ValidationError(
+                f"Service '{value}' already exists."
+            )
+ 
         return value
-
-    def validate(self, data):
-        registration_charges = data.get("registration_charges")
-        if registration_charges is not None and registration_charges < 0:
-            raise ValidationError({"registration_charges": "Registration charges cannot be negative"})
-        return data
+ 
+    def validate_registration_charges(self, value):
+        if value < 0:
+            raise serializers.ValidationError(
+                "Registration charges must be a positive number."
+            )
+        return value
 
 class SocialMediaSerializer(serializers.ModelSerializer):
     media_image = serializers.CharField(required=False)
